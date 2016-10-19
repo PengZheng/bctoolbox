@@ -3,7 +3,7 @@
 
 AC_PREREQ([2.63])
 
-AC_INIT([bctoolbox],[0.3.0],[jehan.monnier@linphone.org])
+AC_INIT([bctoolbox],[0.4.0],[jehan.monnier@linphone.org])
 
 BCTOOLBOX_SO_CURRENT=0 dnl increment this number when you add/change/remove an interface
 BCTOOLBOX_SO_REVISION=0 dnl increment this number when you change source code, without changing interfaces; set to 0 when incrementing CURRENT
@@ -161,7 +161,7 @@ CPPFLAGS="$CPPFLAGS $MBEDTLS_CFLAGS"
 LIBS="$LIBS $MBEDTLS_LIBS"
 
 AC_CHECK_HEADER(mbedtls/ssl.h, [
-	AC_CHECK_LIB(mbedtls, mbedtls_pk_parse_key, [mbedtls_found=true; MBEDTLS_LIBS="$MBEDTLS_LIBS -lmbedtls -lmbedcrypto"], [mbedtls_found=false], [-lmbedcrypto]) ],
+	AC_CHECK_LIB(mbedtls, mbedtls_pk_parse_key, [mbedtls_found=true; MBEDTLS_LIBS="$MBEDTLS_LIBS -lmbedtls -lmbedcrypto -lmbedx509"], [mbedtls_found=false], [-lmbedcrypto]) ],
 	[mbedtls_found=false]
 )
 

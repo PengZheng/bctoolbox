@@ -664,6 +664,7 @@ void bctbx_DestroyDHMContext(bctbx_DHMContext_t *context) {
 /** context **/
 struct bctbx_ssl_context_struct {
 	ssl_context ssl_ctx;
+	char *cn;
 	int(*callback_cli_cert_function)(void *, bctbx_ssl_context_t *, unsigned char *, size_t); /**< pointer to the callback called to update client certificate during handshake
 													callback params are user_data, ssl_context, certificate distinguished name, name length */
 	void *callback_cli_cert_data; /**< data passed to the client cert callback */
@@ -684,6 +685,7 @@ bctbx_ssl_context_t *bctbx_ssl_context_new(void) {
 }
 
 void bctbx_ssl_context_free(bctbx_ssl_context_t *ssl_ctx) {
+	if (ssl_ctx->cn) bctbx_free(ssl_ctx->cn);
 	ssl_free(&(ssl_ctx->ssl_ctx));
 	bctbx_free(ssl_ctx);
 }
@@ -797,11 +799,19 @@ const bctbx_x509_certificate_t *bctbx_ssl_get_peer_certificate(bctbx_ssl_context
 }
 
 const char *bctbx_ssl_get_ciphersuite(bctbx_ssl_context_t *ssl_ctx){
-	return ssl_get_ciphersuite_name(&(ssl_ctx->ssl_ctx));
+	return ssl_get_ciphersuite(&(ssl_ctx->ssl_ctx));
 }
 
 const char *bctbx_ssl_get_version(bctbx_ssl_context_t *ssl_ctx){
 	return ssl_get_version(&(ssl_ctx->ssl_ctx));
+}
+
+int32_t bctbx_ssl_set_hostname(bctbx_ssl_context_t *ssl_ctx, const char *hostname){
+	if (ssl_ctx->cn) bctbx_free(ssl_ctx->cn);
+	if (hostname) ssl_ctx->cn = bctbx_strdup(hostname);
+	else ssl_ctx->cn = NULL;
+	ssl_ctx->ssl_ctx.peer_cn = ssl_ctx->cn;
+	return 0;
 }
 
 /** DTLS SRTP functions **/
@@ -892,7 +902,6 @@ struct bctbx_ssl_config_struct {
 	int(*callback_verify_function)(void *, x509_crt *, int, int *); /**< pointer to the verify callback function */
 	void *callback_verify_data; /**< data passed to the verify callback */
 	x509_crt *ca_chain; /**< trusted CA chain */
-	char *peer_cn; /**< expected peer Common name */
 	x509_crt *own_cert;
 	pk_context *own_cert_pk;
 	int(*callback_cli_cert_function)(void *, bctbx_ssl_context_t *, unsigned char *, size_t); /**< pointer to the callback called to update client certificate during handshake
@@ -921,7 +930,6 @@ bctbx_ssl_config_t *bctbx_ssl_config_new(void) {
 	ssl_config->callback_cli_cert_function = NULL;
 	ssl_config->callback_cli_cert_data = NULL;
 	ssl_config->ca_chain = NULL;
-	ssl_config->peer_cn = NULL;
 	ssl_config->own_cert = NULL;
 	ssl_config->own_cert_pk = NULL;
 #ifdef HAVE_DTLS_SRTP
@@ -1044,10 +1052,9 @@ int32_t bctbx_ssl_config_set_callback_cli_cert(bctbx_ssl_config_t *ssl_config, i
 	return BCTBX_ERROR_INVALID_SSL_CONFIG;
 }
 
-int32_t bctbx_ssl_config_set_ca_chain(bctbx_ssl_config_t *ssl_config, bctbx_x509_certificate_t *ca_chain, char *peer_cn) {
+int32_t bctbx_ssl_config_set_ca_chain(bctbx_ssl_config_t *ssl_config, bctbx_x509_certificate_t *ca_chain) {
 	if (ssl_config != NULL) {
 		ssl_config->ca_chain = (x509_crt *)ca_chain;
-		ssl_config->peer_cn = peer_cn;
 	}
 	return BCTBX_ERROR_INVALID_SSL_CONFIG;
 }
@@ -1129,7 +1136,7 @@ int32_t bctbx_ssl_context_setup(bctbx_ssl_context_t *ssl_ctx, bctbx_ssl_config_t
 	}
 
 	if (ssl_config->ca_chain != NULL) {
-		ssl_set_ca_chain(&(ssl_ctx->ssl_ctx), ssl_config->ca_chain, NULL, ssl_config->peer_cn);
+		ssl_set_ca_chain(&(ssl_ctx->ssl_ctx), ssl_config->ca_chain, NULL, ssl_ctx->cn);
 	}
 
 	if (ssl_config->own_cert != NULL && ssl_config->own_cert_pk != NULL) {

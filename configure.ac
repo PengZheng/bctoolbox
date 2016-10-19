@@ -68,9 +68,10 @@ if test "$strict" = "true" ; then
 fi
 AC_SUBST(STRICT_OPTIONS)
 
-
 dnl Check if we have clock_nanosleep
-AC_CHECK_FUNCS(clock_nanosleep)
+AC_CHECK_FUNCS(clock_nanosleep, [],
+	AC_CHECK_LIB(rt, clock_nanosleep, [AC_DEFINE(HAVE_CLOCK_NANOSLEEP)])
+)
 
 # Checks for libraries.
 

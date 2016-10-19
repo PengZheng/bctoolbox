@@ -757,7 +757,7 @@ void bctbx_sleep_ms(int ms){
 }
 
 void bctbx_sleep_until(const bctoolboxTimeSpec *ts){
-#if defined(__linux) && defined(HAVE_CLOCK_NANOSLEEP)
+#ifdef __linux
 	struct timespec rq;
 	rq.tv_sec=ts->tv_sec;
 	rq.tv_nsec=ts->tv_nsec;

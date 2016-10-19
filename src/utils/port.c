@@ -757,7 +757,7 @@ void bctbx_sleep_ms(int ms){
 }
 
 void bctbx_sleep_until(const bctoolboxTimeSpec *ts){
-#ifdef __linux
+#if defined(__linux) && defined(HAVE_CLOCK_NANOSLEEP)
 	struct timespec rq;
 	rq.tv_sec=ts->tv_sec;
 	rq.tv_nsec=ts->tv_nsec;
@@ -1346,7 +1346,11 @@ static int get_local_ip_for_with_connect(int type, const char *dest, int port, c
 	int err, tmp;
 	struct addrinfo hints;
 	struct addrinfo *res = NULL;
-	struct sockaddr_storage addr;
+	union {
+		struct sockaddr_storage a;
+		struct sockaddr b;
+		struct sockaddr_in c;
+	} addr;
 	struct sockaddr *p_addr = (struct sockaddr *)&addr;
 	bctbx_socket_t sock;
 	socklen_t s;

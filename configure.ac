@@ -69,6 +69,9 @@ fi
 AC_SUBST(STRICT_OPTIONS)
 
 
+dnl Check if we have clock_nanosleep
+AC_CHECK_FUNCS(clock_nanosleep)
+
 # Checks for libraries.
 
 # Checks for header files.
@@ -112,12 +115,12 @@ fi
 
 
 if test "$mbedtls_prefix" != "/usr" ; then
-	MBEDTLS_CFLAGS="-I${mbedtls_prefix}"
+	MBEDTLS_CFLAGS="-I${mbedtls_prefix}/include"
 	MBEDTLS_LIBS="-L${mbedtls_prefix}/lib"
 fi
 
 if test "$bcunit_prefix" != "/usr/local" ; then
-	BCUNIT_CFLAGS="-I${bcunit_prefix}"
+	BCUNIT_CFLAGS="-I${bcunit_prefix}/include"
 	BCUNIT_LIBS="-L${bcunit_prefix}/lib"
 fi
 
@@ -128,7 +131,7 @@ CPPFLAGS="$CPPFLAGS $BCUNIT_CFLAGS"
 LIBS="$LIBS $BCUNIT_LIBS"
 
 AC_CHECK_HEADER(BCUnit/BCUnit.h, [
-	AC_CHECK_LIB(bcunit, CU_get_error, [BCUNIT_LIBS="BCUNIT_LIBS -lbcunit"; bcunit_found=true],
+	AC_CHECK_LIB(bcunit, CU_get_error, [BCUNIT_LIBS="$BCUNIT_LIBS -lbcunit"; bcunit_found=true],
 	[bcunit_found=false]) ],
 	[bcunit_found=false]
 )
